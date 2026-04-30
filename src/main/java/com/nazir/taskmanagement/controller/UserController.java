@@ -29,26 +29,21 @@ public class UserController {
 
     @GetMapping("/profile")
     @Operation(summary = "Get current user's profile")
-    public ResponseEntity<ApiResponse<UserResponse>> getProfile(
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserResponse>> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(UserResponse.from(user)));
     }
 
     @PutMapping("/profile")
     @Operation(summary = "Update current user's profile")
-    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody UpdateUserRequest request) {
         UserResponse updated = userService.updateProfile(userDetails.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.success("Profile updated", updated));
     }
 
     @PostMapping("/change-password")
     @Operation(summary = "Change current user's password")
-    public ResponseEntity<ApiResponse<Void>> changePassword(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> changePassword(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
