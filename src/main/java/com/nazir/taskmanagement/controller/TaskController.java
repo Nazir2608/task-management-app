@@ -37,14 +37,10 @@ public class TaskController {
 
     @PostMapping("/projects/{projectId}/tasks")
     @Operation(summary = "Create a task inside a project")
-    public ResponseEntity<ApiResponse<TaskResponse>> createTask(
-            @PathVariable Long projectId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody TaskRequest request) {
+    public ResponseEntity<ApiResponse<TaskResponse>> createTask(@PathVariable Long projectId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TaskRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         TaskResponse task = taskService.createTask(projectId, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Task created", task));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Task created", task));
     }
 
     @GetMapping("/projects/{projectId}/tasks")
@@ -65,39 +61,28 @@ public class TaskController {
 
     @GetMapping("/projects/{projectId}/tasks/board")
     @Operation(summary = "Get all tasks for Kanban board view (ungrouped)")
-    public ResponseEntity<ApiResponse<List<TaskResponse>>> getBoardTasks(
-            @PathVariable Long projectId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getBoardTasks(@PathVariable Long projectId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(taskService.getTasksBoardByProject(projectId, user)));
     }
 
     @GetMapping("/tasks/{taskId}")
     @Operation(summary = "Get a single task by ID")
-    public ResponseEntity<ApiResponse<TaskResponse>> getTask(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<TaskResponse>> getTask(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(taskService.getTaskById(taskId, user)));
     }
 
     @PutMapping("/tasks/{taskId}")
     @Operation(summary = "Update a task (full update)")
-    public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody TaskRequest request) {
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTask(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TaskRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Task updated",
-                taskService.updateTask(taskId, request, user)));
+        return ResponseEntity.ok(ApiResponse.success("Task updated", taskService.updateTask(taskId, request, user)));
     }
 
     @PatchMapping("/tasks/{taskId}/status")
     @Operation(summary = "Update task status only (used by Kanban drag-and-drop)")
-    public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody TaskStatusRequest request) {
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TaskStatusRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Status updated",
                 taskService.updateTaskStatus(taskId, request, user)));
@@ -105,20 +90,14 @@ public class TaskController {
 
     @PatchMapping("/tasks/{taskId}/assign/{assigneeId}")
     @Operation(summary = "Assign a task to a project member")
-    public ResponseEntity<ApiResponse<TaskResponse>> assignTask(
-            @PathVariable Long taskId,
-            @PathVariable Long assigneeId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<TaskResponse>> assignTask(@PathVariable Long taskId, @PathVariable Long assigneeId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Task assigned",
-                taskService.assignTask(taskId, assigneeId, user)));
+        return ResponseEntity.ok(ApiResponse.success("Task assigned", taskService.assignTask(taskId, assigneeId, user)));
     }
 
     @DeleteMapping("/tasks/{taskId}")
     @Operation(summary = "Delete a task")
-    public ResponseEntity<ApiResponse<Void>> deleteTask(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<Void>> deleteTask(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         taskService.deleteTask(taskId, user);
         return ResponseEntity.ok(ApiResponse.success("Task deleted", null));
@@ -128,9 +107,7 @@ public class TaskController {
 
     @GetMapping("/tasks/{taskId}/activities")
     @Operation(summary = "Get activity/change log for a task")
-    public ResponseEntity<ApiResponse<List<ActivityResponse>>> getTaskActivities(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<ActivityResponse>>> getTaskActivities(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(taskService.getTaskActivities(taskId, user)));
     }
@@ -149,17 +126,14 @@ public class TaskController {
 
     @GetMapping("/tasks/dashboard")
     @Operation(summary = "Get dashboard statistics for the current user")
-    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(taskService.getDashboard(user)));
     }
 
     @GetMapping("/tasks/search")
     @Operation(summary = "Full-text search across task titles, descriptions and task numbers")
-    public ResponseEntity<ApiResponse<List<TaskResponse>>> searchTasks(
-            @RequestParam String q,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> searchTasks(@RequestParam String q, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(taskService.searchTasks(q, user)));
     }

@@ -30,42 +30,29 @@ public class CommentController {
 
     @PostMapping("/tasks/{taskId}/comments")
     @Operation(summary = "Add a comment to a task")
-    public ResponseEntity<ApiResponse<CommentResponse>> addComment(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody CommentRequest request) {
+    public ResponseEntity<ApiResponse<CommentResponse>> addComment(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody CommentRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         CommentResponse comment = commentService.addComment(taskId, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Comment added", comment));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Comment added", comment));
     }
 
     @GetMapping("/tasks/{taskId}/comments")
     @Operation(summary = "Get all comments for a task")
-    public ResponseEntity<ApiResponse<List<CommentResponse>>> getTaskComments(
-            @PathVariable Long taskId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<CommentResponse>>> getTaskComments(@PathVariable Long taskId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(
-                commentService.getTaskComments(taskId, user)));
+        return ResponseEntity.ok(ApiResponse.success(commentService.getTaskComments(taskId, user)));
     }
 
     @PutMapping("/comments/{commentId}")
     @Operation(summary = "Edit a comment (author only)")
-    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
-            @PathVariable Long commentId,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody CommentRequest request) {
+    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(@PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody CommentRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Comment updated",
-                commentService.updateComment(commentId, request, user)));
+        return ResponseEntity.ok(ApiResponse.success("Comment updated", commentService.updateComment(commentId, request, user)));
     }
 
     @DeleteMapping("/comments/{commentId}")
     @Operation(summary = "Delete a comment")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(
-            @PathVariable Long commentId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         commentService.deleteComment(commentId, user);
         return ResponseEntity.ok(ApiResponse.success("Comment deleted", null));

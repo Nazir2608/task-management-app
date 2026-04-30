@@ -30,13 +30,10 @@ public class ProjectController {
 
     @PostMapping
     @Operation(summary = "Create a new project")
-    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ProjectRequest request) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ProjectRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         ProjectResponse project = projectService.createProject(request, user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Project created", project));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Project created", project));
     }
 
     @GetMapping
@@ -49,19 +46,14 @@ public class ProjectController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get project by ID")
-    public ResponseEntity<ApiResponse<ProjectResponse>> getProject(
-        @PathVariable Long id,
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProject(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(projectService.getProjectById(id, user)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update project details")
-    public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(
-        @PathVariable Long id,
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ProjectRequest request) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ProjectRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Project updated",
             projectService.updateProject(id, request, user)));
@@ -69,9 +61,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a project")
-    public ResponseEntity<ApiResponse<Void>> deleteProject(
-        @PathVariable Long id,
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<Void>> deleteProject(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         projectService.deleteProject(id, user);
         return ResponseEntity.ok(ApiResponse.success("Project deleted successfully", null));
@@ -79,10 +69,7 @@ public class ProjectController {
 
     @PostMapping("/{id}/members/{userId}")
     @Operation(summary = "Add a member to the project")
-    public ResponseEntity<ApiResponse<ProjectResponse>> addMember(
-        @PathVariable Long id,
-        @PathVariable Long userId,
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> addMember(@PathVariable Long id, @PathVariable Long userId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Member added",
             projectService.addMember(id, userId, user)));
@@ -90,10 +77,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}/members/{userId}")
     @Operation(summary = "Remove a member from the project")
-    public ResponseEntity<ApiResponse<ProjectResponse>> removeMember(
-        @PathVariable Long id,
-        @PathVariable Long userId,
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> removeMember(@PathVariable Long id, @PathVariable Long userId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Member removed",
             projectService.removeMember(id, userId, user)));
