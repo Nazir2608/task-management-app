@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: task-management-app
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    disable-swagger-default-url: true
+
+app:
+  jwt:
+    expiration: 86400000        # 24 hours
+    refresh-expiration: 604800000  # 7 days

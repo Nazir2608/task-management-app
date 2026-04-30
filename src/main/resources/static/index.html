@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Task Management</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <!-- Feather Icons CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════  AUTH PAGE  ═══════════════════════════ -->
+<div id="auth-page" class="auth-page">
+  <div class="auth-bg">
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-name">TaskFlow</span>
+    </div>
+    <p class="auth-tagline">Manage projects. Ship tasks. Stay aligned.</p>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <h2 class="form-title">Welcome back</h2>
+      <div class="form-group">
+        <label>Username or Email</label>
+        <div class="input-icon-wrap">
+          <i data-feather="user" class="input-icon"></i>
+          <input id="login-username" type="text" placeholder="admin" autocomplete="username" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-icon-wrap">
+          <i data-feather="lock" class="input-icon"></i>
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+          <button class="input-icon-right toggle-pw" type="button" onclick="togglePassword('login-password',this)">
+            <i data-feather="eye"></i>
+          </button>
+        </div>
+      </div>
+      <div id="login-error" class="form-error hidden"></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">
+        <span id="login-btn-text">Sign In</span>
+        <span id="login-spinner" class="spinner hidden"></span>
+      </button>
+      <div class="auth-hint">
+        <div class="demo-creds">
+          <span>🔑 Quick demo:</span>
+          <button class="cred-chip" onclick="fillCreds('admin','Admin@123')">admin</button>
+          <button class="cred-chip" onclick="fillCreds('demo','Demo@123')">demo</button>
+          <button class="cred-chip" onclick="fillCreds('alice','Alice@123')">alice</button>
+        </div>
+      </div>
+      <p class="auth-switch">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="hidden">
+      <h2 class="form-title">Create account</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input id="reg-firstName" type="text" placeholder="John" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input id="reg-lastName" type="text" placeholder="Doe" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Username <span class="required">*</span></label>
+        <div class="input-icon-wrap">
+          <i data-feather="at-sign" class="input-icon"></i>
+          <input id="reg-username" type="text" placeholder="johndoe" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email <span class="required">*</span></label>
+        <div class="input-icon-wrap">
+          <i data-feather="mail" class="input-icon"></i>
+          <input id="reg-email" type="email" placeholder="john@example.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password <span class="required">*</span></label>
+        <div class="input-icon-wrap">
+          <i data-feather="lock" class="input-icon"></i>
+          <input id="reg-password" type="password" placeholder="Min 8 chars, A-Z, a-z, 0-9" />
+        </div>
+        <small class="field-hint">Must have uppercase, lowercase, and a number</small>
+      </div>
+      <div id="register-error" class="form-error hidden"></div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">
+        <span id="register-btn-text">Create Account</span>
+        <span id="register-spinner" class="spinner hidden"></span>
+      </button>
+      <p class="auth-switch">Already have an account? <a href="#" onclick="showLogin()">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════  APP SHELL  ════════════════════════════ -->
+<div id="app" class="app hidden">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-name">TaskFlow</span>
+      <button class="sidebar-close" onclick="toggleSidebar()"><i data-feather="x"></i></button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+        <i data-feather="home"></i><span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="my-tasks" onclick="navigateTo('my-tasks')">
+        <i data-feather="check-square"></i><span>My Tasks</span>
+        <span class="nav-badge" id="my-tasks-badge"></span>
+      </a>
+      <a class="nav-item" data-page="projects" onclick="navigateTo('projects')">
+        <i data-feather="layers"></i><span>Projects</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-section-title">PROJECTS</div>
+    <nav class="sidebar-projects" id="sidebar-projects">
+      <div class="loading-line"></div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="navigateTo('profile')">
+        <div class="avatar sm" id="sidebar-avatar">?</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-username" id="sidebar-username">Loading…</div>
+          <div class="sidebar-role" id="sidebar-role"></div>
+        </div>
+      </div>
+      <button class="btn-icon logout-btn" onclick="doLogout()" title="Logout">
+        <i data-feather="log-out"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="btn-icon menu-toggle" onclick="toggleSidebar()">
+      <i data-feather="menu"></i>
+    </button>
+    <div class="topbar-search">
+      <i data-feather="search" class="search-icon"></i>
+      <input id="global-search" type="text" placeholder="Search tasks…" oninput="debounceSearch(this.value)" />
+      <div class="search-results hidden" id="search-results"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openCreateTaskModal()">
+        <i data-feather="plus"></i> New Task
+      </button>
+      <div class="avatar sm topbar-avatar" id="topbar-avatar" onclick="navigateTo('profile')" title="My Profile">?</div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main-content" id="main-content">
+    <!-- Pages injected here by JS -->
+  </main>
+</div>
+
+<!-- ═══════════════════════════  MODALS  ═══════════════════════════════ -->
+
+<!-- Create / Edit Task Modal -->
+<div id="task-modal" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="task-modal-title">Create Task</h3>
+      <button class="btn-icon" onclick="closeModal('task-modal')"><i data-feather="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group flex-2">
+          <label>Title <span class="required">*</span></label>
+          <input id="t-title" type="text" placeholder="Short, descriptive title…" />
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="t-type">
+            <option value="TASK">📋 Task</option>
+            <option value="BUG">🐛 Bug</option>
+            <option value="FEATURE">✨ Feature</option>
+            <option value="STORY">📖 Story</option>
+            <option value="EPIC">🏔 Epic</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="t-description" rows="3" placeholder="Add context, acceptance criteria, notes…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Project <span class="required">*</span></label>
+          <select id="t-project" onchange="loadAssigneesForProject(this.value)">
+            <option value="">— Select project —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assignee</label>
+          <select id="t-assignee">
+            <option value="">— Unassigned —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="t-status">
+            <option value="BACKLOG">Backlog</option>
+            <option value="TODO" selected>To Do</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="IN_REVIEW">In Review</option>
+            <option value="DONE">Done</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="t-priority">
+            <option value="LOW">🟢 Low</option>
+            <option value="MEDIUM" selected>🔵 Medium</option>
+            <option value="HIGH">🟠 High</option>
+            <option value="CRITICAL">🔴 Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input id="t-dueDate" type="date" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Estimated Hours</label>
+          <input id="t-estimatedHours" type="number" min="0" max="1000" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Logged Hours</label>
+          <input id="t-loggedHours" type="number" min="0" placeholder="0" />
+        </div>
+      </div>
+      <div id="task-modal-error" class="form-error hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">
+        <span id="task-save-text">Create Task</span>
+        <span id="task-save-spinner" class="spinner hidden"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Project Modal -->
+<div id="project-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>New Project</h3>
+      <button class="btn-icon" onclick="closeModal('project-modal')"><i data-feather="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Project Name <span class="required">*</span></label>
+        <input id="p-name" type="text" placeholder="My Awesome Project" />
+      </div>
+      <div class="form-group">
+        <label>Key <span class="hint">(auto-generated if blank)</span></label>
+        <input id="p-key" type="text" placeholder="MAP" maxlength="8" style="text-transform:uppercase" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="p-description" rows="3" placeholder="What is this project about?"></textarea>
+      </div>
+      <div id="project-modal-error" class="form-error hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('project-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div id="task-detail-modal" class="modal-overlay hidden">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <span class="task-number-badge" id="td-number"></span>
+        <h3 id="td-title" style="margin:4px 0 0"></h3>
+      </div>
+      <button class="btn-icon" onclick="closeModal('task-detail-modal')"><i data-feather="x"></i></button>
+    </div>
+    <div class="modal-body task-detail-body">
+      <div class="task-detail-main">
+        <div class="detail-section">
+          <h4 class="detail-section-title">Description</h4>
+          <p id="td-description" class="detail-description"></p>
+        </div>
+        <div class="detail-section">
+          <h4 class="detail-section-title">Comments</h4>
+          <div id="td-comments" class="comments-list"></div>
+          <div class="comment-input-row">
+            <div class="avatar sm" id="td-comment-avatar">?</div>
+            <div class="comment-input-wrap">
+              <textarea id="td-comment-input" rows="2" placeholder="Add a comment…"></textarea>
+              <button class="btn btn-primary btn-sm" onclick="submitComment()">Post</button>
+            </div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h4 class="detail-section-title">Activity</h4>
+          <div id="td-activities" class="activity-list"></div>
+        </div>
+      </div>
+      <aside class="task-detail-sidebar">
+        <div class="detail-meta-item">
+          <span class="meta-label">Status</span>
+          <select id="td-status-select" onchange="quickUpdateStatus(this.value)" class="meta-select"></select>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Priority</span>
+          <span id="td-priority" class="badge"></span>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Type</span>
+          <span id="td-type"></span>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Assignee</span>
+          <div id="td-assignee" class="meta-user"></div>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Reporter</span>
+          <div id="td-reporter" class="meta-user"></div>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Due Date</span>
+          <span id="td-due" class="meta-value"></span>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Progress</span>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div id="td-progress" class="progress-fill"></div></div>
+            <span id="td-hours-text" class="meta-value" style="font-size:11px"></span>
+          </div>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Project</span>
+          <span id="td-project" class="meta-value"></span>
+        </div>
+        <div class="detail-meta-item">
+          <span class="meta-label">Created</span>
+          <span id="td-created" class="meta-value"></span>
+        </div>
+        <div class="detail-actions">
+          <button class="btn btn-secondary btn-sm btn-full" onclick="openEditTaskFromDetail()">
+            <i data-feather="edit-2"></i> Edit Task
+          </button>
+          <button class="btn btn-danger btn-sm btn-full" onclick="deleteCurrentTask()">
+            <i data-feather="trash-2"></i> Delete
+          </button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
