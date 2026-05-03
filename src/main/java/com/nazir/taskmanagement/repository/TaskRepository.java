@@ -28,23 +28,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByProjectIdAndStatus(Long projectId, TaskStatus status);
 
     @Query("SELECT t FROM Task t WHERE t.project.id = :projectId " +
-           "AND (:status IS NULL OR t.status = :status) " +
-           "AND (:priority IS NULL OR t.priority = :priority) " +
-           "AND (:type IS NULL OR t.type = :type) " +
-           "AND (:assigneeId IS NULL OR t.assignee.id = :assigneeId)")
+            "AND (:status IS NULL OR t.status = :status) " +
+            "AND (:priority IS NULL OR t.priority = :priority) " +
+            "AND (:type IS NULL OR t.type = :type) " +
+            "AND (:assigneeId IS NULL OR t.assignee.id = :assigneeId)")
     Page<Task> findByProjectWithFilters(Long projectId, TaskStatus status,
                                         Priority priority, TaskType type,
                                         Long assigneeId, Pageable pageable);
 
     @Query("SELECT t FROM Task t WHERE t.assignee = :user AND t.status NOT IN ('DONE', 'CANCELLED') " +
-           "ORDER BY t.dueDate ASC NULLS LAST, t.priority DESC")
+            "ORDER BY t.dueDate ASC NULLS LAST, t.priority DESC")
     List<Task> findActiveTasksByAssignee(User user);
 
     @Query("SELECT t FROM Task t WHERE t.dueDate < :date AND t.status NOT IN ('DONE', 'CANCELLED')")
     List<Task> findOverdueTasks(LocalDate date);
 
     @Query("SELECT t FROM Task t WHERE t.dueDate BETWEEN :from AND :to AND t.status NOT IN ('DONE', 'CANCELLED') " +
-           "ORDER BY t.dueDate ASC")
+            "ORDER BY t.dueDate ASC")
     List<Task> findUpcomingDueTasks(LocalDate from, LocalDate to);
 
     long countByAssigneeAndStatus(User assignee, TaskStatus status);
@@ -56,13 +56,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Object[]> countByProjectGroupedByStatus(Long projectId);
 
     @Query("SELECT t FROM Task t WHERE t.project.id IN " +
-           "(SELECT p.id FROM Project p WHERE p.owner = :user OR :user MEMBER OF p.members) " +
-           "ORDER BY t.createdAt DESC")
+            "(SELECT p.id FROM Project p WHERE p.owner = :user OR :user MEMBER OF p.members) " +
+            "ORDER BY t.createdAt DESC")
     List<Task> findRecentTasksForUser(User user, Pageable pageable);
 
     @Query("SELECT t FROM Task t WHERE " +
-           "LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(t.taskNumber) LIKE LOWER(CONCAT('%', :query, '%'))")
+            "LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(t.taskNumber) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Task> searchTasks(String query, Pageable pageable);
 }

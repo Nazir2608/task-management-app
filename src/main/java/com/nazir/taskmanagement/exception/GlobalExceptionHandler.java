@@ -21,37 +21,37 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnauthorized(UnauthorizedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-            .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateResourceException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(ApiResponse.error("Invalid username or password"));
+                .body(ApiResponse.error("Invalid username or password"));
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(ApiResponse.error("Account is disabled. Please contact support."));
+                .body(ApiResponse.error("Account is disabled. Please contact support."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -62,17 +62,17 @@ public class GlobalExceptionHandler {
             errors.put(field, error.getDefaultMessage());
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.<Map<String, String>>builder()
-                .success(false)
-                .message("Validation failed")
-                .data(errors)
-                .build());
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message("Validation failed")
+                        .data(errors)
+                        .build());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
         log.error("Unexpected error: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("An unexpected error occurred. Please try again."));
+                .body(ApiResponse.error("An unexpected error occurred. Please try again."));
     }
 }

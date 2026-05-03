@@ -8,7 +8,10 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskRequest {
 
     @NotBlank(message = "Task title is required")

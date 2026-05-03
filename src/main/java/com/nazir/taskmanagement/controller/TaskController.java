@@ -33,8 +33,6 @@ public class TaskController {
     private final TaskService taskService;
     private final UserService userService;
 
-    // ─── Task CRUD ───────────────────────────────────────────────────────────
-
     @PostMapping("/projects/{projectId}/tasks")
     @Operation(summary = "Create a task inside a project")
     public ResponseEntity<ApiResponse<TaskResponse>> createTask(@PathVariable Long projectId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TaskRequest request) {

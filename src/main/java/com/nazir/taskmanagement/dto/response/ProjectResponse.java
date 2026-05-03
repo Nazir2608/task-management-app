@@ -7,7 +7,11 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProjectResponse {
     private Long id;
     private String name;
@@ -23,17 +27,17 @@ public class ProjectResponse {
 
     public static ProjectResponse from(Project project) {
         return ProjectResponse.builder()
-            .id(project.getId())
-            .name(project.getName())
-            .description(project.getDescription())
-            .key(project.getKey())
-            .status(project.getStatus())
-            .owner(UserResponse.from(project.getOwner()))
-            .members(project.getMembers().stream().map(UserResponse::from).toList())
-            .memberCount(project.getMembers().size())
-            .taskCount(project.getTasks().size())
-            .createdAt(project.getCreatedAt())
-            .updatedAt(project.getUpdatedAt())
-            .build();
+                .id(project.getId())
+                .name(project.getName())
+                .description(project.getDescription())
+                .key(project.getKey())
+                .status(project.getStatus())
+                .owner(UserResponse.from(project.getOwner()))
+                .members(project.getMembers().stream().map(UserResponse::from).toList())
+                .memberCount(project.getMembers().size())
+                .taskCount(project.getTasks().size())
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
+                .build();
     }
 }

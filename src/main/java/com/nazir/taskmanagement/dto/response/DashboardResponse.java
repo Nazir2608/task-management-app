@@ -1,10 +1,15 @@
 package com.nazir.taskmanagement.dto.response;
 
 import lombok.*;
+
 import java.util.List;
 import java.util.Map;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DashboardResponse {
     private long totalProjects;
     private long totalTasks;

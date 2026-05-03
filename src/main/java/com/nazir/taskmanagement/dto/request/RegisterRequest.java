@@ -3,7 +3,10 @@ package com.nazir.taskmanagement.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
 
     @NotBlank(message = "Username is required")
@@ -18,8 +21,8 @@ public class RegisterRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     @Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-        message = "Password must contain at least one uppercase, lowercase, and number"
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
+            message = "Password must contain at least one uppercase, lowercase, and number"
     )
     private String password;
 

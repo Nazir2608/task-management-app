@@ -10,10 +10,14 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comments", indexes = {
-    @Index(name = "idx_comments_task", columnList = "task_id")
+        @Index(name = "idx_comments_task", columnList = "task_id")
 })
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Comment {
 
     @Id

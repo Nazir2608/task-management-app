@@ -20,13 +20,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
 
         return org.springframework.security.core.userdetails.User.builder()
-            .username(user.getUsername())
-            .password(user.getPassword())
-            .disabled(!user.isEnabled())
-            .authorities(List.of(new SimpleGrantedAuthority(user.getRole().name())))
-            .build();
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .disabled(!user.isEnabled())
+                .authorities(List.of(new SimpleGrantedAuthority(user.getRole().name())))
+                .build();
     }
 }

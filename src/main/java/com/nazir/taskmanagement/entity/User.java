@@ -14,7 +14,11 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -70,7 +74,7 @@ public class User {
     public String getInitials() {
         if (firstName != null && lastName != null) {
             return String.valueOf(firstName.charAt(0)).toUpperCase()
-                + String.valueOf(lastName.charAt(0)).toUpperCase();
+                    + String.valueOf(lastName.charAt(0)).toUpperCase();
         }
         return String.valueOf(username.charAt(0)).toUpperCase();
     }

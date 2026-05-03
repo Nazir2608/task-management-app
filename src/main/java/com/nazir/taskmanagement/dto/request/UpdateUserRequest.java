@@ -3,7 +3,10 @@ package com.nazir.taskmanagement.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateUserRequest {
 
     @Size(max = 50)

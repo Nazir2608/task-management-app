@@ -5,7 +5,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CommentResponse {
     private Long id;
     private String content;
@@ -16,12 +20,12 @@ public class CommentResponse {
 
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
-            .id(comment.getId())
-            .content(comment.getContent())
-            .taskId(comment.getTask().getId())
-            .author(UserResponse.from(comment.getAuthor()))
-            .createdAt(comment.getCreatedAt())
-            .updatedAt(comment.getUpdatedAt())
-            .build();
+                .id(comment.getId())
+                .content(comment.getContent())
+                .taskId(comment.getTask().getId())
+                .author(UserResponse.from(comment.getAuthor()))
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .build();
     }
 }

@@ -5,7 +5,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
@@ -18,24 +22,24 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
-            .success(true)
-            .message("Operation successful")
-            .data(data)
-            .build();
+                .success(true)
+                .message("Operation successful")
+                .data(data)
+                .build();
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
-            .success(true)
-            .message(message)
-            .data(data)
-            .build();
+                .success(true)
+                .message(message)
+                .data(data)
+                .build();
     }
 
     public static ApiResponse<Void> error(String message) {
         return ApiResponse.<Void>builder()
-            .success(false)
-            .message(message)
-            .build();
+                .success(false)
+                .message(message)
+                .build();
     }
 }

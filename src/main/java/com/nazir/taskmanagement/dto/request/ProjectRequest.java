@@ -4,7 +4,10 @@ import com.nazir.taskmanagement.entity.enums.ProjectStatus;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProjectRequest {
 
     @NotBlank(message = "Project name is required")

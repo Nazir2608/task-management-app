@@ -16,7 +16,11 @@ import java.util.Set;
 @Entity
 @Table(name = "projects")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Project {
 
     @Id
@@ -43,9 +47,9 @@ public class Project {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "project_members",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
+            name = "project_members",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     @Builder.Default
     private Set<User> members = new HashSet<>();

@@ -22,6 +22,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByOwnerOrMemberAndStatus(User user, ProjectStatus status);
 
     boolean existsByKey(String key);
+
     Optional<Project> findByKey(String key);
 
     @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId")

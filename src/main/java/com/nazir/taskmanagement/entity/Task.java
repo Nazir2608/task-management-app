@@ -16,12 +16,16 @@ import java.util.List;
 
 @Entity
 @Table(name = "tasks", indexes = {
-    @Index(name = "idx_tasks_project", columnList = "project_id"),
-    @Index(name = "idx_tasks_assignee", columnList = "assignee_id"),
-    @Index(name = "idx_tasks_status", columnList = "status")
+        @Index(name = "idx_tasks_project", columnList = "project_id"),
+        @Index(name = "idx_tasks_assignee", columnList = "assignee_id"),
+        @Index(name = "idx_tasks_status", columnList = "status")
 })
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Task {
 
     @Id
@@ -92,6 +96,6 @@ public class Task {
 
     public boolean isOverdue() {
         return dueDate != null && dueDate.isBefore(LocalDate.now())
-            && status != TaskStatus.DONE && status != TaskStatus.CANCELLED;
+                && status != TaskStatus.DONE && status != TaskStatus.CANCELLED;
     }
 }

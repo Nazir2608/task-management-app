@@ -9,10 +9,14 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "task_activities", indexes = {
-    @Index(name = "idx_activities_task", columnList = "task_id")
+        @Index(name = "idx_activities_task", columnList = "task_id")
 })
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TaskActivity {
 
     @Id

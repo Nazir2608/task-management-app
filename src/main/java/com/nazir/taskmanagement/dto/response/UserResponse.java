@@ -6,7 +6,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserResponse {
     private Long id;
     private String username;
@@ -22,17 +26,17 @@ public class UserResponse {
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
-            .id(user.getId())
-            .username(user.getUsername())
-            .email(user.getEmail())
-            .firstName(user.getFirstName())
-            .lastName(user.getLastName())
-            .fullName(user.getFullName())
-            .initials(user.getInitials())
-            .avatar(user.getAvatar())
-            .role(user.getRole())
-            .enabled(user.isEnabled())
-            .createdAt(user.getCreatedAt())
-            .build();
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .fullName(user.getFullName())
+                .initials(user.getInitials())
+                .avatar(user.getAvatar())
+                .role(user.getRole())
+                .enabled(user.isEnabled())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }
