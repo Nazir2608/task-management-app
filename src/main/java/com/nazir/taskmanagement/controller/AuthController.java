@@ -26,8 +26,7 @@ public class AuthController {
     @Operation(summary = "Register a new user account")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Account created successfully", response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Account created successfully", response));
     }
 
     @PostMapping("/login")
@@ -39,8 +38,7 @@ public class AuthController {
 
     @GetMapping("/me")
     @Operation(summary = "Get currently authenticated user")
-    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
-        @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         UserResponse user = authService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(user));
     }

@@ -55,8 +55,7 @@ public class ProjectController {
     @Operation(summary = "Update project details")
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ProjectRequest request) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Project updated",
-            projectService.updateProject(id, request, user)));
+        return ResponseEntity.ok(ApiResponse.success("Project updated", projectService.updateProject(id, request, user)));
     }
 
     @DeleteMapping("/{id}")
@@ -71,15 +70,13 @@ public class ProjectController {
     @Operation(summary = "Add a member to the project")
     public ResponseEntity<ApiResponse<ProjectResponse>> addMember(@PathVariable Long id, @PathVariable Long userId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Member added",
-            projectService.addMember(id, userId, user)));
+        return ResponseEntity.ok(ApiResponse.success("Member added", projectService.addMember(id, userId, user)));
     }
 
     @DeleteMapping("/{id}/members/{userId}")
     @Operation(summary = "Remove a member from the project")
     public ResponseEntity<ApiResponse<ProjectResponse>> removeMember(@PathVariable Long id, @PathVariable Long userId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getUserByUsername(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("Member removed",
-            projectService.removeMember(id, userId, user)));
+        return ResponseEntity.ok(ApiResponse.success("Member removed", projectService.removeMember(id, userId, user)));
     }
 }

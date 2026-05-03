@@ -118,7 +118,7 @@ public class DataInitializer implements ApplicationRunner {
 
         projectRepository.save(project);
 
-        log.info("✅ Seed data created successfully!");
+        log.info(" Seed data created successfully!");
         log.info("   Admin:  admin / Admin@123");
         log.info("   Demo:   demo / Demo@123");
         log.info("   Alice:  alice / Alice@123");
