@@ -31,8 +31,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("register — new user is saved and JWT returned")
     void register_newUser_succeeds() {
-        RegisterRequest req = new RegisterRequest(
-                "nazir", "nazir@test.com", "Password@1", "Nazir", "Dev");
+        RegisterRequest req = new RegisterRequest("nazir", "nazir@test.com", "Password@1", "Nazir", "Dev");
 
         when(userRepository.existsByUsername("nazir")).thenReturn(false);
         when(userRepository.existsByEmail("nazir@test.com")).thenReturn(false);
@@ -55,8 +54,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("register — duplicate username throws DuplicateResourceException")
     void register_duplicateUsername_throws() {
-        RegisterRequest req = new RegisterRequest(
-                "admin", "new@test.com", "Password@1", null, null);
+        RegisterRequest req = new RegisterRequest("admin", "new@test.com", "Password@1", null, null);
 
         when(userRepository.existsByUsername("admin")).thenReturn(true);
 
@@ -69,8 +67,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("register — duplicate email throws DuplicateResourceException")
     void register_duplicateEmail_throws() {
-        RegisterRequest req = new RegisterRequest(
-                "newuser", "admin@taskmanager.com", "Password@1", null, null);
+        RegisterRequest req = new RegisterRequest("newuser", "admin@taskmanager.com", "Password@1", null, null);
 
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("admin@taskmanager.com")).thenReturn(true);
