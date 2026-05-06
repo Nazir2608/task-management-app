@@ -36,15 +36,11 @@ class TaskServiceTest {
 
     @BeforeEach
     void setUp() {
-        owner = User.builder().id(1L).username("owner")
-                .role(Role.ROLE_MANAGER).enabled(true).build();
-        memberUser = User.builder().id(2L).username("member")
-                .role(Role.ROLE_USER).enabled(true).build();
-        outsider = User.builder().id(3L).username("outsider")
-                .role(Role.ROLE_USER).enabled(true).build();
+        owner = User.builder().id(1L).username("owner").role(Role.ROLE_MANAGER).enabled(true).build();
+        memberUser = User.builder().id(2L).username("member").role(Role.ROLE_USER).enabled(true).build();
+        outsider = User.builder().id(3L).username("outsider").role(Role.ROLE_USER).enabled(true).build();
 
-        project = Project.builder().id(1L).name("Test Project")
-                .key("TP").owner(owner).taskCounter(0).build();
+        project = Project.builder().id(1L).name("Test Project").key("TP").owner(owner).taskCounter(0).build();
         project.getMembers().add(owner);
         project.getMembers().add(memberUser);
     }
@@ -80,8 +76,7 @@ class TaskServiceTest {
         TaskRequest req = new TaskRequest();
         req.setTitle("Hack");
 
-        assertThatThrownBy(() -> taskService.createTask(1L, req, outsider))
-                .isInstanceOf(UnauthorizedException.class);
+        assertThatThrownBy(() -> taskService.createTask(1L, req, outsider)).isInstanceOf(UnauthorizedException.class);
         verify(taskRepository, never()).save(any());
     }
 
@@ -91,8 +86,7 @@ class TaskServiceTest {
     @DisplayName("findTaskById — throws when task not found")
     void findTaskById_notFound_throws() {
         when(taskRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> taskService.findTaskById(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> taskService.findTaskById(99L)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── updateTaskStatus ──────────────────────────────────────────────────────
