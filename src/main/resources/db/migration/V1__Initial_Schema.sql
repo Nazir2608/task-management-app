@@ -1,4 +1,6 @@
+-- ============================================================
 -- V1 — Initial Schema for Task Management Application
+-- ============================================================
 
 -- USERS
 CREATE TABLE users (
