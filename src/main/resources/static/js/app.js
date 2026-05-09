@@ -1106,3 +1106,572 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement?.id === 'login-password') doLogin();
   if (e.key === 'Enter' && document.activeElement?.id === 'login-username') el('login-password')?.focus();
 });
+
+/* ================================================================
+   Phase 2 — Notifications, Sprints, Attachments, Time Tracking
+   ================================================================ */
+
+// ── Token management (refresh token support) ────────────────────
+const TokenMgr = {
+  getAccess()   { return localStorage.getItem('tf_token'); },
+  getRefresh()  { return localStorage.getItem('tf_refresh'); },
+  save(data) {
+    localStorage.setItem('tf_token',   data.accessToken);
+    localStorage.setItem('tf_refresh', data.refreshToken);
+    localStorage.setItem('tf_user',    JSON.stringify(data.user));
+    State.token = data.accessToken;
+    State.user  = data.user;
+  },
+  clear() {
+    ['tf_token','tf_refresh','tf_user'].forEach(k => localStorage.removeItem(k));
+  }
+};
+
+// Override API.req to auto-refresh on 401
+const _origReq = API.req.bind(API);
+API.req = async function(method, path, body) {
+  try {
+    return await _origReq(method, path, body);
+  } catch(e) {
+    if (e.message && e.message.includes('401') && !path.includes('/auth/')) {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) return await _origReq(method, path, body);
+    }
+    throw e;
+  }
+};
+
+async function tryRefreshToken() {
+  const rt = TokenMgr.getRefresh();
+  if (!rt) return false;
+  try {
+    const res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt })
+    });
+    if (!res.ok) { logout(); return false; }
+    const data = await res.json();
+    TokenMgr.save(data.data || data);
+    return true;
+  } catch(e) {
+    logout();
+    return false;
+  }
+}
+
+// Patch doLogin / doRegister to store refresh token
+const _origLogin = doLogin;
+doLogin = async function() {
+  const u = v('login-username'), p = v('login-password');
+  if (!u || !p) return showError('login-error', 'Please fill all fields');
+  setLoading('login-btn-text', 'login-spinner', true);
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernameOrEmail: u, password: p })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Login failed');
+    TokenMgr.save(data.data || data);
+    initApp();
+  } catch(e) { showError('login-error', e.message); }
+  finally { setLoading('login-btn-text', 'login-spinner', false); }
+};
+
+// ── Topbar: add notification bell ─────────────────────────────────
+const _origInitApp = initApp;
+initApp = async function() {
+  hide('auth-page'); show('app');
+  updateSidebarUser();
+  injectNotifBell();
+  await loadProjects();
+  await refreshNotifCount();
+  navigateTo('dashboard');
+  feather.replace();
+};
+
+function injectNotifBell() {
+  const right = document.querySelector('.topbar-right');
+  if (!right || document.getElementById('notif-btn')) return;
+  const btn = document.createElement('div');
+  btn.style.cssText = 'position:relative';
+  btn.innerHTML = `
+    <button class="btn-icon notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
+      <i data-feather="bell"></i>
+      <span class="notif-count hidden" id="notif-count">0</span>
+    </button>
+    <div class="notif-panel hidden" id="notif-panel">
+      <div class="notif-panel-header">
+        <span>Notifications</span>
+        <button class="btn-ghost btn-sm" onclick="markAllNotifRead()">Mark all read</button>
+      </div>
+      <div class="notif-list" id="notif-list">
+        <div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">Loading…</div>
+      </div>
+    </div>`;
+  right.insertBefore(btn, right.firstChild);
+  feather.replace();
+}
+
+async function refreshNotifCount() {
+  try {
+    const data = await API.get('/notifications/unread-count');
+    const count = data?.count || 0;
+    const badge = el('notif-count');
+    if (!badge) return;
+    if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  } catch(e) {}
+}
+
+async function toggleNotifPanel() {
+  const panel = el('notif-panel');
+  if (!panel) return;
+  const open = !panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', open);
+  if (!open) {
+    await loadNotifications();
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const data = await API.get('/notifications?size=15');
+    const items = data?.content || [];
+    el('notif-list').innerHTML = items.length
+      ? items.map(n => `
+          <div class="notif-item ${n.read ? '' : 'unread'}"
+               onclick="handleNotifClick(${n.entityId},'${n.entityType}',${n.id})">
+            <span class="notif-icon">${notifIcon(n.type)}</span>
+            <div class="notif-body">
+              <div class="notif-title">${esc(n.title)}</div>
+              <div class="notif-msg">${esc(n.message||'')}</div>
+              <div class="notif-time">${fmtDateTime(n.createdAt)}</div>
+            </div>
+          </div>`).join('')
+      : '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px">🔔 All caught up!</div>';
+  } catch(e) {}
+}
+
+function notifIcon(type) {
+  const m = {
+    TASK_ASSIGNED:'📋', TASK_STATUS_CHANGED:'🔄',
+    TASK_COMMENTED:'💬', TASK_DUE_SOON:'⏰',
+    PROJECT_MEMBER_ADDED:'👥', SPRINT_STARTED:'🚀',
+    SPRINT_COMPLETED:'✅', MENTION:'@'
+  };
+  return m[type] || '🔔';
+}
+
+async function handleNotifClick(entityId, entityType, notifId) {
+  hide('notif-panel');
+  await API.patch(`/notifications/${notifId}/read`, {});
+  refreshNotifCount();
+  if (entityType === 'TASK' && entityId) openTaskDetail(entityId);
+  else if (entityType === 'SPRINT' && entityId) navigateTo('dashboard');
+}
+
+async function markAllNotifRead() {
+  await API.post('/notifications/mark-all-read', {});
+  refreshNotifCount();
+  loadNotifications();
+}
+
+// close notif panel on outside click
+document.addEventListener('click', e => {
+  const panel = el('notif-panel');
+  const btn   = el('notif-btn');
+  if (panel && btn && !panel.classList.contains('hidden')
+      && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.add('hidden');
+  }
+});
+
+// ── Periodically refresh notification count ──────────────────────
+setInterval(refreshNotifCount, 60000);
+
+// ── Sprint page ──────────────────────────────────────────────────
+async function renderSprintBoard(projectId) {
+  const project = State.projects.find(p => p.id == projectId);
+  el('main-content').innerHTML = `
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Sprint Board</h1>
+          <p class="page-subtitle">${esc(project?.name || '')}</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('board',${projectId})">
+            <i data-feather="grid"></i> Kanban
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="showBacklog(${projectId})">
+            <i data-feather="list"></i> Backlog
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="showCreateSprintModal(${projectId})">
+            <i data-feather="plus"></i> New Sprint
+          </button>
+        </div>
+      </div>
+      <div id="sprint-content">
+        <div class="loading-line" style="height:120px;border-radius:10px"></div>
+      </div>
+    </div>`;
+  feather.replace();
+
+  try {
+    const sprints = await API.get(`/projects/${projectId}/sprints`);
+    if (!sprints?.length) {
+      el('sprint-content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🏃</div>
+          <h3>No sprints yet</h3>
+          <p>Create your first sprint to start planning iterations.</p>
+          <button class="btn btn-primary" onclick="showCreateSprintModal(${projectId})">Create Sprint</button>
+        </div>`;
+      return;
+    }
+
+    const activeSprint = sprints.find(s => s.status === 'ACTIVE');
+    let html = '';
+
+    if (activeSprint) {
+      const pct = activeSprint.totalTasks
+        ? Math.round((activeSprint.completedTasks / activeSprint.totalTasks) * 100) : 0;
+      html += `
+        <div class="sprint-header">
+          <div class="sprint-info">
+            <span style="font-size:20px">🚀</span>
+            <div>
+              <div class="sprint-name">${esc(activeSprint.name)}</div>
+              <div class="sprint-dates">${fmtDate(activeSprint.startDate)} → ${fmtDate(activeSprint.endDate)}</div>
+            </div>
+            <span class="badge badge-progress">ACTIVE</span>
+            ${activeSprint.velocity ? `<span class="velocity-chip">⚡ ${activeSprint.velocity} pts</span>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="sprint-progress-wrap">
+              <span>${activeSprint.completedTasks}/${activeSprint.totalTasks} done</span>
+              <div class="sprint-progress-bar">
+                <div class="sprint-progress-fill" style="width:${pct}%"></div>
+              </div>
+              <span>${pct}%</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="completeSprint(${activeSprint.id},${projectId})">
+              Complete Sprint
+            </button>
+          </div>
+        </div>`;
+    }
+
+    // List all sprints
+    html += `<div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Sprint</th><th>Status</th><th>Period</th>
+          <th>Tasks</th><th>Velocity</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+        ${sprints.map(s => `
+          <tr>
+            <td><div style="font-weight:600">${esc(s.name)}</div>
+                ${s.goal ? `<div style="font-size:11px;color:var(--text-3)">${esc(s.goal)}</div>` : ''}</td>
+            <td><span class="badge ${sprintStatusClass(s.status)}">${s.status}</span></td>
+            <td style="font-size:12px;color:var(--text-2)">
+              ${s.startDate ? fmtDate(s.startDate) : '—'} → ${s.endDate ? fmtDate(s.endDate) : '—'}
+            </td>
+            <td><span class="badge badge-todo">${s.completedTasks}/${s.totalTasks}</span></td>
+            <td>${s.velocity ? `<span class="sp-badge">⚡ ${s.velocity}</span>` : '—'}</td>
+            <td>
+              ${s.status === 'PLANNED' ? `<button class="btn btn-primary btn-sm" onclick="startSprint(${s.id},${projectId})">Start</button>` : ''}
+              ${s.status === 'ACTIVE'  ? `<button class="btn btn-secondary btn-sm" onclick="completeSprint(${s.id},${projectId})">Complete</button>` : ''}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+    el('sprint-content').innerHTML = html;
+    feather.replace();
+  } catch(e) { toast('Failed to load sprints', 'error'); }
+}
+
+function sprintStatusClass(s) {
+  return { PLANNED:'badge-todo', ACTIVE:'badge-progress', COMPLETED:'badge-done' }[s] || 'badge-todo';
+}
+
+async function startSprint(sprintId, projectId) {
+  if (!confirm('Start this sprint? Only one sprint can be active at a time.')) return;
+  try {
+    await API.post(`/projects/${projectId}/sprints/${sprintId}/start`, {});
+    toast('Sprint started! 🚀', 'success');
+    renderSprintBoard(projectId);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function completeSprint(sprintId, projectId) {
+  if (!confirm('Complete this sprint? Incomplete tasks will be moved to backlog.')) return;
+  try {
+    await API.post(`/projects/${projectId}/sprints/${sprintId}/complete`, {});
+    toast('Sprint completed! ✅', 'success');
+    renderSprintBoard(projectId);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function showCreateSprintModal(projectId) {
+  // Simple inline prompt — real UI would use a modal
+  const name = prompt('Sprint name:');
+  if (!name) return;
+  const goal  = prompt('Sprint goal (optional):') || '';
+  const start = prompt('Start date (YYYY-MM-DD, optional):') || null;
+  const end   = prompt('End date   (YYYY-MM-DD, optional):') || null;
+  API.post(`/projects/${projectId}/sprints`, { name, goal, startDate: start, endDate: end })
+    .then(() => { toast('Sprint created', 'success'); renderSprintBoard(projectId); })
+    .catch(e  => toast(e.message, 'error'));
+}
+
+// ── Extend Task Detail Modal — Phase 2 tabs ─────────────────────
+const _origOpenDetail = openTaskDetail;
+openTaskDetail = async function(taskId) {
+  await _origOpenDetail(taskId);
+  injectDetailTabs(taskId);
+};
+
+function injectDetailTabs(taskId) {
+  const main = document.querySelector('.task-detail-main');
+  if (!main) return;
+
+  const sections = main.querySelectorAll('.detail-section');
+  if (!sections.length) return;
+
+  const descSection     = sections[0];
+  const commentsSection = sections[1];
+  const activitySection = sections[2];
+
+  // Wrap in tabs
+  const tabWrap = document.createElement('div');
+  tabWrap.innerHTML = `
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-desc',this)">Description</button>
+      <button class="tab-btn" onclick="switchTab('tab-comments',this)">Comments</button>
+      <button class="tab-btn" onclick="switchTab('tab-activity',this)">Activity</button>
+      <button class="tab-btn" onclick="switchTab('tab-attachments',this)">Files</button>
+      <button class="tab-btn" onclick="switchTab('tab-time',this)">Time</button>
+    </div>
+    <div id="tab-desc" class="tab-pane active"></div>
+    <div id="tab-comments" class="tab-pane"></div>
+    <div id="tab-activity" class="tab-pane"></div>
+    <div id="tab-attachments" class="tab-pane">
+      <div class="detail-section">
+        <h4 class="detail-section-title">Attachments</h4>
+        <div id="td-attachments-list"></div>
+        <label class="upload-zone" for="td-file-input">
+          <i data-feather="upload-cloud" style="width:24px;height:24px;margin-bottom:6px"></i>
+          <div>Drop a file here or <strong>click to upload</strong></div>
+          <div style="font-size:11px;margin-top:4px">Max 10 MB</div>
+          <input type="file" id="td-file-input" onchange="uploadAttachment(${taskId}, this)"/>
+        </label>
+      </div>
+    </div>
+    <div id="tab-time" class="tab-pane">
+      <div class="detail-section">
+        <h4 class="detail-section-title">Time Entries</h4>
+        <div id="td-time-list" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="margin:0">
+            <label style="font-size:11px">Minutes</label>
+            <input id="td-time-minutes" type="number" min="1" max="1440"
+                   placeholder="e.g. 90" style="width:90px;height:32px;font-size:12px"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:11px">Date</label>
+            <input id="td-time-date" type="date" style="width:130px;height:32px;font-size:12px"/>
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:120px">
+            <label style="font-size:11px">Note (optional)</label>
+            <input id="td-time-desc" type="text" placeholder="What did you work on?"
+                   style="height:32px;font-size:12px"/>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="logTime(${taskId})">
+            <i data-feather="clock"></i> Log
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // Move existing sections into tabs
+  tabWrap.querySelector('#tab-desc').appendChild(descSection.cloneNode(true));
+  tabWrap.querySelector('#tab-comments').appendChild(commentsSection.cloneNode(true));
+  tabWrap.querySelector('#tab-activity').appendChild(activitySection.cloneNode(true));
+
+  // Replace main content
+  main.innerHTML = '';
+  main.appendChild(tabWrap);
+
+  // Set today's date
+  const dateInput = el('td-time-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  loadAttachments(taskId);
+  loadTimeEntries(taskId);
+  feather.replace();
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el(tabId)?.classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Attachments in Task Detail ───────────────────────────────────
+async function loadAttachments(taskId) {
+  try {
+    const list = await API.get(`/tasks/${taskId}/attachments`);
+    const container = el('td-attachments-list');
+    if (!container) return;
+    container.innerHTML = list?.length
+      ? list.map(a => `
+          <div class="attachment-item">
+            <span class="attachment-icon">${fileIcon(a.contentType)}</span>
+            <div class="attachment-meta">
+              <div class="attachment-name">${esc(a.originalName)}</div>
+              <div class="attachment-size">${esc(a.fileSizeFormatted)} · ${esc(a.uploadedBy?.username||'?')} · ${fmtDateTime(a.createdAt)}</div>
+            </div>
+            <a href="${a.downloadUrl}" class="btn btn-ghost btn-sm" download="${esc(a.originalName)}">
+              <i data-feather="download"></i>
+            </a>
+            <button class="btn btn-danger btn-sm" onclick="deleteAttachment(${a.id},${taskId})">
+              <i data-feather="trash-2"></i>
+            </button>
+          </div>`).join('')
+      : '<p style="color:var(--text-3);font-size:12px">No files attached yet.</p>';
+    feather.replace();
+  } catch(e) {}
+}
+
+function fileIcon(ct) {
+  if (!ct) return '📄';
+  if (ct.startsWith('image/'))       return '🖼';
+  if (ct === 'application/pdf')      return '📕';
+  if (ct.includes('spreadsheet') || ct.includes('excel')) return '📊';
+  if (ct.includes('word'))           return '📝';
+  if (ct.includes('zip') || ct.includes('compressed')) return '🗜';
+  return '📄';
+}
+
+async function uploadAttachment(taskId, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch(`/api/tasks/${taskId}/attachments`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + State.token },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Upload failed');
+    toast('File uploaded', 'success');
+    loadAttachments(taskId);
+    input.value = '';
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteAttachment(attachId, taskId) {
+  if (!confirm('Delete this attachment?')) return;
+  try {
+    await API.delete(`/attachments/${attachId}`);
+    toast('Attachment deleted', 'success');
+    loadAttachments(taskId);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Time Entries in Task Detail ──────────────────────────────────
+async function loadTimeEntries(taskId) {
+  try {
+    const entries = await API.get(`/tasks/${taskId}/time`);
+    const container = el('td-time-list');
+    if (!container) return;
+    const total = entries?.reduce((s, e) => s + e.minutes, 0) || 0;
+    const h = Math.floor(total / 60), m = total % 60;
+    container.innerHTML = entries?.length ? `
+      <div style="margin-bottom:8px;font-size:12px;color:var(--text-2)">
+        Total logged: <span class="time-badge">${h}h ${m > 0 ? m + 'm' : ''}</span>
+      </div>
+      ${entries.slice(0,8).map(e => `
+        <div class="time-entry-item">
+          <span class="time-badge">${esc(e.hoursFormatted)}</span>
+          <div class="avatar sm">${esc(e.user?.initials||'?')}</div>
+          <span style="flex:1;color:var(--text-2)">${esc(e.description||'No description')}</span>
+          <span style="color:var(--text-3);font-size:11px">${fmtDate(e.logDate)}</span>
+          <button class="btn-icon" onclick="deleteTimeEntry(${e.id},${taskId})" title="Delete">
+            <i data-feather="x" style="width:12px;height:12px"></i>
+          </button>
+        </div>`).join('')}` : '<p style="color:var(--text-3);font-size:12px">No time logged yet.</p>';
+    feather.replace();
+  } catch(e) {}
+}
+
+async function logTime(taskId) {
+  const minutes = parseInt(v('td-time-minutes'));
+  const logDate = v('td-time-date');
+  const description = v('td-time-desc');
+  if (!minutes || minutes < 1) return toast('Enter minutes to log', 'info');
+  try {
+    await API.post(`/tasks/${taskId}/time`, {
+      minutes, logDate: logDate || new Date().toISOString().split('T')[0], description
+    });
+    el('td-time-minutes').value = '';
+    el('td-time-desc').value    = '';
+    toast(`${minutes} minutes logged ⏱`, 'success');
+    loadTimeEntries(taskId);
+    // refresh task detail sidebar hours
+    openTaskDetail(taskId);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteTimeEntry(entryId, taskId) {
+  if (!confirm('Delete this time entry?')) return;
+  try {
+    await API.delete(`/time/${entryId}`);
+    toast('Time entry deleted', 'success');
+    loadTimeEntries(taskId);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Label chips in Kanban cards ──────────────────────────────────
+const _origKanbanCard = kanbanCardHtml;
+kanbanCardHtml = function(t) {
+  let base = _origKanbanCard(t);
+  if (t.labels?.length) {
+    const chips = t.labels.map(l =>
+      `<span class="label-chip" style="background:${l.color}22;color:${l.color};border-color:${l.color}44">${esc(l.name)}</span>`
+    ).join('');
+    base = base.replace('class="kanban-card-title"',
+      `class="kanban-card-title" data-labels="${esc(JSON.stringify(t.labels))}"`)
+      .replace('</div>\n    </div>', `<div class="labels-wrap" style="margin-bottom:6px">${chips}</div>\n    </div>`);
+  }
+  return base;
+};
+
+// ── Sidebar sprint link for active project ───────────────────────
+const _origRenderSidebarProjects = renderSidebarProjects;
+renderSidebarProjects = function() {
+  _origRenderSidebarProjects();
+  // Append sprint link below each project
+  document.querySelectorAll('.sidebar-project-item').forEach(item => {
+    const pid = item.getAttribute('onclick')?.match(/\d+/)?.[0];
+    if (!pid) return;
+    const sprintBtn = document.createElement('div');
+    sprintBtn.className = 'sidebar-project-item';
+    sprintBtn.style.cssText = 'padding-left:44px;font-size:11px;color:var(--text-3)';
+    sprintBtn.innerHTML = '<i data-feather="zap" style="width:11px;height:11px"></i> Sprints';
+    sprintBtn.onclick = () => renderSprintBoard(pid);
+    item.after(sprintBtn);
+  });
+  feather.replace();
+};
+
