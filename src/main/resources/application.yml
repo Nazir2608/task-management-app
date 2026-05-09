@@ -7,12 +7,17 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 25MB
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,cache
   endpoint:
     health:
       show-details: when_authorized
@@ -23,9 +28,17 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: method
-    disable-swagger-default-url: true
 
 app:
   jwt:
-    expiration: 86400000        # 24 hours
-    refresh-expiration: 604800000  # 7 days
+    expiration: 900000           # 15 min
+    refresh-expiration: 604800000 # 7 days
+  upload:
+    dir: ${user.home}/taskflow-uploads
+    max-size: 10485760
+  rate-limit:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  mail:
+    from: noreply@taskflow.dev
