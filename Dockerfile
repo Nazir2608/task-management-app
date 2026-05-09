@@ -1,15 +1,16 @@
 # ── Stage 1: Build ──────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
+# First copy only pom.xml to cache dependencies
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Then copy source code
 COPY src ./src
 
-# Download deps first (layer caching)
-RUN apk add --no-cache maven && \
-    mvn dependency:go-offline -q
-
-RUN mvn package -DskipTests -q
+# Build the application
+RUN mvn package -DskipTests -B
 
 # ── Stage 2: Runtime ────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine AS runtime
